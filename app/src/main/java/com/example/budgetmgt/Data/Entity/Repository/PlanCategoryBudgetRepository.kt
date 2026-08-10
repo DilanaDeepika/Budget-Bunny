@@ -14,6 +14,12 @@ class PlanCategoryBudgetRepository(private val planCategoryBudgetDao: PlanCatego
     suspend fun updateSpendAmount(planId: Int, categoryId: Int, amount: Double) =
         planCategoryBudgetDao.updateSpendAmount(planId,categoryId,amount)
 
+    suspend fun updateEstimatedBudget(planId: Int, categoryId: Int, estimatedBudget: Double) =
+        planCategoryBudgetDao.updateEstimatedBudget(planId, categoryId, estimatedBudget)
+
+    suspend fun deleteBudgetForCategory(planId: Int, categoryId: Int) =
+        planCategoryBudgetDao.deleteBudgetForCategory(planId, categoryId)
+
     fun getCategoriesWithBudgetForPlan(planId: Int): Flow<List<CategoryWithAmount>> {
         return planCategoryBudgetDao.getCategoriesWithBudgetForPlan(planId)
     }

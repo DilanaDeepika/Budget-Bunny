@@ -17,6 +17,16 @@ interface PlanCategoryBudgetDao {
     @Update
     suspend fun update(planCategoryBudget: PlanCategoryBudget)
 
+    @Query("""
+        UPDATE plan_category_budget
+        SET estimatedBudget = :estimatedBudget
+        WHERE planId = :planId AND categoryId = :categoryId
+    """)
+    suspend fun updateEstimatedBudget(planId: Int, categoryId: Int, estimatedBudget: Double)
+
+    @Query("DELETE FROM plan_category_budget WHERE planId = :planId AND categoryId = :categoryId")
+    suspend fun deleteBudgetForCategory(planId: Int, categoryId: Int)
+
     // Delete
     @Delete
     suspend fun delete(planCategoryBudget: PlanCategoryBudget)

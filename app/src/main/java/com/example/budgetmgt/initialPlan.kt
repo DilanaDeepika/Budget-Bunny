@@ -18,6 +18,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.budgetmgt.viewmodel.BudgetViewModel
+import kotlinx.coroutines.flow.first
 
 // ---------------------------------------------------------
 // 1. THE HELPER CLASS (Draft Object)
@@ -36,7 +37,8 @@ data class BudgetAllocation(
 fun InitialPlanScreen(
     onCreateClick: (String, String, List<BudgetAllocation>) -> Unit,
     onCancelClick: () -> Unit = {},
-    viewModel: BudgetViewModel
+    viewModel: BudgetViewModel,
+    editPlanId: Int? = null
 ) {
 
     // --- DATA: OBSERVE CATEGORIES FROM DB ---
@@ -50,6 +52,26 @@ fun InitialPlanScreen(
     var allocatedCategories by remember { mutableStateOf(listOf<BudgetAllocation>()) }
 
     var isDropdownExpanded by remember { mutableStateOf(false) }
+    var editDataLoaded by remember(editPlanId) { mutableStateOf(false) }
+
+    LaunchedEffect(editPlanId) {
+        if (editPlanId != null && !editDataLoaded) {
+            val plan = viewModel.getPlanById(editPlanId)
+            val budgets = viewModel.getCategoryBudgetsForPlan(editPlanId).first()
+            if (plan != null) {
+                planName = plan.name
+                totalBudgetStr = plan.totalBudget.toString()
+                allocatedCategories = budgets.map {
+                    BudgetAllocation(
+                        categoryId = it.categoryId,
+                        categoryName = it.categoryName,
+                        amount = it.allocatedAmount.toString()
+                    )
+                }
+            }
+            editDataLoaded = true
+        }
+    }
 
     // --- MATH CALCULATIONS ---
     val totalBudget = totalBudgetStr.toDoubleOrNull() ?: 0.0
@@ -61,7 +83,7 @@ fun InitialPlanScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Create Monthly Plan", fontWeight = FontWeight.Bold) },
+                title = { Text(if (editPlanId == null) "Create Monthly Plan" else "Update Monthly Plan", fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF6200EE),
                     titleContentColor = Color.White
@@ -95,7 +117,7 @@ fun InitialPlanScreen(
                             allocatedCategories.isNotEmpty() && // Must have at least one category
                             remainingBudget == 0.0              // Remaining must be zero
                 ) {
-                    Text("Save Plan")
+                    Text(if (editPlanId == null) "Save Plan" else "Update Plan")
                 }
             }
         }

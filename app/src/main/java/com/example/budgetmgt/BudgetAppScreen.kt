@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.*
@@ -21,6 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -164,6 +167,21 @@ fun BudgetAppScreen(
                                                 )
 
 
+                                                IconButton(
+                                                    onClick = {
+                                                        isPlanMenuExpanded = false
+                                                        navController.navigate("editPlan/${plan.planId}")
+                                                    },
+                                                    modifier = Modifier.size(32.dp)
+                                                ) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Edit,
+                                                        contentDescription = "Update plan",
+                                                        tint = PrimaryPurple,
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                }
+
                                                 // DELETE
                                                 IconButton(
                                                     onClick = {
@@ -195,7 +213,7 @@ fun BudgetAppScreen(
                 },
                 actions = {
                     Text(
-                        text = "v1.1.1",
+                        text = "v1.1.3",
                         color = Color.White.copy(alpha = 0.6f),
                         fontSize = 12.sp,
                         modifier = Modifier.padding(end = 16.dp)
@@ -365,4 +383,5 @@ fun BudgetAppScreen(
             }
         )
     }
+
 }

@@ -27,6 +27,9 @@ interface PlanDao {
     @Query("SELECT * FROM plans WHERE planId = :planId")
     suspend fun getPlanById(planId: Int): Plan?
 
+    @Update
+    suspend fun updatePlan(plan: Plan)
+
 
 
 

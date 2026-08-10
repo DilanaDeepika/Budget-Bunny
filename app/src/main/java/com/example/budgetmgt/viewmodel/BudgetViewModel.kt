@@ -26,6 +26,7 @@ import kotlinx.coroutines.Dispatchers
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.collections.forEach
@@ -226,7 +227,6 @@ class BudgetViewModel(
                     val rowId = itemRepository.insertItem(newItem) // Returns -1 if exists
 
                     if (rowId == -1L) {
-                        // 🛑 THIS IS WHERE IT WAS CRASHING
                         // Insert failed because it exists. Fetch the ID again.
                         itemId = itemRepository.getItemByName(cleanName, categoryId)?.itemId ?: -1
                     } else {
@@ -260,6 +260,7 @@ class BudgetViewModel(
             e.printStackTrace()
         }
     }
+
 
     // 1. DELETE FUNCTION
     fun deletePurchaseItem(
@@ -317,12 +318,56 @@ class BudgetViewModel(
         return purchaseRepository.getDailyStats(planId)
     }
 
-    fun updatePlan(plan: Plan) = viewModelScope.launch(Dispatchers.IO) {
-        planRepository.updatePlan(plan)
-    }
+
 
     fun deletePlan(plan: Plan) = viewModelScope.launch(Dispatchers.IO) {
         planRepository.deletePlan(plan)
+    }
+
+    fun updatePlan(plan: Plan) {
+        viewModelScope.launch(Dispatchers.IO) {
+            planRepository.updatePlan(plan)
+        }
+    }
+
+    fun updatePlanWithAllocations(
+        plan: Plan,
+        planName: String,
+        totalBudgetStr: String,
+        allocations: List<BudgetAllocation>
+    ) = viewModelScope.launch(Dispatchers.IO) {
+        val existingCategoryIds = planCategoryBudgetRepository
+            .getCategoriesWithBudgetForPlan(plan.planId)
+            .first()
+            .map { it.categoryId }
+            .toSet()
+        val updatedCategoryIds = allocations.map { it.categoryId }.toSet()
+
+        (existingCategoryIds - updatedCategoryIds).forEach { categoryId ->
+            planCategoryBudgetRepository.deleteBudgetForCategory(plan.planId, categoryId)
+        }
+
+        allocations.forEach { allocation ->
+            val amount = allocation.amount.toDoubleOrNull() ?: 0.0
+            if (allocation.categoryId in existingCategoryIds) {
+                planCategoryBudgetRepository.updateEstimatedBudget(plan.planId, allocation.categoryId, amount)
+            } else {
+                planCategoryBudgetRepository.insertBudget(
+                    PlanCategoryBudget(
+                        planId = plan.planId,
+                        categoryId = allocation.categoryId,
+                        estimatedBudget = amount
+                    )
+                )
+            }
+        }
+
+        planRepository.updatePlan(
+            plan.copy(
+                name = planName.trim(),
+                totalBudget = totalBudgetStr.toDoubleOrNull()?.toLong() ?: plan.totalBudget
+            )
+        )
     }
 
 

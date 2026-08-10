@@ -1,6 +1,8 @@
 package com.example.budgetmgt
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -51,6 +53,32 @@ fun AppNavigation(
                 onCancelClick = { navController.popBackStack() },
                 viewModel = budgetViewModel
             )
+        }
+
+        composable(
+            route = "editPlan/{planId}",
+            arguments = listOf(navArgument("planId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val planId = backStackEntry.arguments?.getInt("planId") ?: return@composable
+            val plan by budgetViewModel.getAllPlans().collectAsState(initial = emptyList())
+            val planToEdit = plan.find { it.planId == planId }
+
+            if (planToEdit != null) {
+                InitialPlanScreen(
+                    editPlanId = planId,
+                    onCreateClick = { planName, totalBudget, categories ->
+                        budgetViewModel.updatePlanWithAllocations(
+                            plan = planToEdit,
+                            planName = planName,
+                            totalBudgetStr = totalBudget,
+                            allocations = categories
+                        )
+                        navController.popBackStack()
+                    },
+                    onCancelClick = { navController.popBackStack() },
+                    viewModel = budgetViewModel
+                )
+            }
         }
 
 
